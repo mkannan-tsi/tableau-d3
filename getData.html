@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> Tableau - D3 </title>
+
+        <link rel="stylesheet" type="text/css" href="css/tableaud3.css">
+                
+        <script src="//d3js.org/d3.v3.min.js"></script>
+		<script type="text/javascript" src="https://demoapac.tableau.com/javascripts/api/tableau-2.js"></script>
+        <script type="text/javascript" src = "source/tableaud3.js"> </script>
+    </head>
+
+    <body onload="initViz();">
+        <h1 class = "center"> Tableau - D3 integration </h1>
+        <h4 class = "center"> Click on a Category bar to show a breakdown of products in D3. By default, products of all categories are shown.  </h4>
+        <br> <br>
+        <div class="center-div" id="vizContainer"></div>
+        <div class="d3-div" id="d3Container"></div>
+    </body>
+</html>

@@ -1,0 +1,46 @@
+/*CSS for viz pop-up*/
+@font-face { font-family: BentonSans; src: url('bentonsans-book.ttf'); } 
+h1 {
+font-family: BentonSans;
+color: #666666;
+}
+
+h4 {
+font-family: BentonSans;
+color: #666666;
+}
+
+body {
+	background-color: #f2f2f2;
+}
+
+.center {
+    margin: 0 auto;
+    width: 50%;
+    text-align:center;
+}
+
+.tooltip { 
+	background-color: #1b1b1b;
+	padding: 3px 5px;
+	border: 1px solid black;
+	text-align: center;
+	font-family: BentonSans;
+	color: #f5f5f5;
+}
+
+.center-div
+{
+  margin: 0 auto;
+  height: 65vh;
+  width: 70vw;
+  border-color: #000;
+  border: 1px solid;
+}
+
+.d3-div
+{
+  margin: 0 auto;
+  height: 65vh;
+  width: 70vw;
+}
