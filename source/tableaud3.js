@@ -1,6 +1,6 @@
-var viz, sheet, table, markSelected = 0;
+var viz, sheet, table, firstLoad = 0, selectedSheet = "Category Breakdown";
 d3ColumnHeaders = ['Product Name', 'Sub-Category', 'Sales'];
-            
+subcategory = []
 // Method to load the Tableau viz
 function initViz() {
         var containerDiv = document.getElementById("vizContainer"),
@@ -9,6 +9,7 @@ function initViz() {
             hideTabs: true,
             hideToolbar: true,
             onFirstInteractive: function () {
+                firstLoad = 1;
                 getUnderlyingData();
                 listenToMarksSelection();
             }
@@ -23,22 +24,17 @@ function listenToMarksSelection() {
 
 // What happens when selecting a mark
 function onMarksSelection(marksEvent) {
-    return marksEvent.getMarksAsync().then(reportSelectedMarks);
+    selectedSheet = marksEvent.getWorksheet().getName();
+    return marksEvent.getMarksAsync().then(reportSelectedMarks);    
 }
 
 function reportSelectedMarks(marks) {
-    if (marks.length > 0) {
-        markSelected = 1;
-    }
-    else {
-        markSelected = 0;
-    }
     getUnderlyingData ();
 }
 
 // Get the underlying data from the sheet
 function getUnderlyingData(){
-    sheet = viz.getWorkbook().getActiveSheet().getWorksheets().get('Category Breakdown');
+    sheet = viz.getWorkbook().getActiveSheet().getWorksheets().get(selectedSheet);
     options = {
         maxRows:0,
         ignoreAliases: false,
@@ -111,19 +107,28 @@ function getUnderlyingData(){
             });
         });
 
-        var sortedArray = newData.children;
-        sortedArray.sort(function(a,b) {
-            sumA = 0;
-            sumB = 0;
-            for (i=0; i<a.children.length; i++) {
-                sumA = sumA + a.children[i].size;
-            }
-            for (i=0; i<b.children.length; i++) {
-                sumB = sumB + b.children[i].size;
-            }
-            return sumB - sumA;
-         });
-        newData.children = sortedArray;
+        // Sorting the array
+        if (firstLoad == 1) {
+          var sortedArray = newData.children;
+          sortedArray.sort(function(a,b) {
+              sumA = 0;
+              sumB = 0;
+              for (i=0; i<a.children.length; i++) {
+                  sumA = sumA + a.children[i].size;
+              }
+              for (i=0; i<b.children.length; i++) {
+                  sumB = sumB + b.children[i].size;
+              }
+              return sumB - sumA;
+           });
+          // Retrieving subcategories for color palette
+          for (i=0; i<sortedArray.length; i++)
+          {
+            subcategory.push(sortedArray[i].name);
+          }
+          firstLoad = 0;
+        }
+        
             
         // Removing the previous sunburst, if it exists
         if (document.getElementById("d3viz")) {
@@ -139,12 +144,7 @@ function getUnderlyingData(){
         
         // Defining Tableau color palettes
         function colors20 (n) {
-          var colors = ["#4e79a7", "#a0cbe8", "#f28e2b", "#ffbe7d", "#59a14f", "#8cd17d", "#b6992d", "#f1ce63", "#499894", "#86bcb6", "#e15759", "#79706e", "#bab0ac", "#d37295", "#b07aa1", "#d4a6c8", "#9d7660", "#d7b5a6"];
-          return colors[n];
-        }
-
-        function colors10 (n) {
-          var colors = ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ac"];
+          var colors = ["#4e79a7", "#a0cbe8", "#f28e2b", "#ffbe7d", "#59a14f", "#8cd17d", "#b6992d", "#f1ce63", "#499894", "#86bcb6", "#e15759", "#ff9d9a", "#79706e", "#bab0ac", "#d37295", "#fabfd2", "#b07aa1"];
           return colors[n];
         }
 
@@ -155,6 +155,7 @@ function getUnderlyingData(){
             .attr("width", width)
             .attr("height", height)
             .append("g")
+            .attr ("id", "d3g")
             .attr("transform", "translate(" + width / 2 + "," + height * .52 + ")");
 
         // Adding tooltip
@@ -163,6 +164,7 @@ function getUnderlyingData(){
             .attr("class", "tooltip")
             .style("position", "absolute")
             .style("z-index", "10")
+            .style("margin", "0 auto")
             .style("opacity", 0);   
 
         // Tooltip functionality
@@ -196,29 +198,23 @@ function getUnderlyingData(){
             .innerRadius(function(d) { return Math.sqrt(d.y); })
             .outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
 
+
         // Coloring the divisions
         var path = svg.selectAll("path")
             .data(partition.nodes(newData))
             .enter().append("path")
+            .attr ("id", "d3path")
             .attr("display", function(d) { return d.depth ? null : "none"; }) // hide inner ring
             .attr("d", arc)
             .style("stroke", "#fff")
             .style("fill", function(d) { 
                 // Determining which color palette to assign, to match Tableau's palette
                 var color;
-                if (markSelected == 0) {
-                    if (previousValue != (d.children ? d : d.parent).name) {
-                        previousValue = (d.children ? d : d.parent).name;
-                        previousValueIndex += 1;
+                for (i=0; i<subcategory.length; i++) {
+                    if ((d.children ? d : d.parent).name === subcategory[i]) {
+                        color = colors20 (i);
+                        break;
                     }
-                    color = colors20 (previousValueIndex);
-                }
-                else {
-                    if (previousValue != (d.children ? d : d.parent).name) {
-                        previousValue = (d.children ? d : d.parent).name;
-                        previousValueIndex += 1;
-                    }
-                    color = colors10 (previousValueIndex);
                 }
                 return color;
             })
@@ -227,6 +223,26 @@ function getUnderlyingData(){
             .on("mouseover", mouseOverArc)
             .on("mousemove", mouseMoveArc)
             .on("mouseout", mouseOutArc);
+
+        function redraw(){
+               // Extract the width and height and set the same for the svg
+               var width = document.getElementById('d3Container').clientWidth;
+               var height = document.getElementById('d3Container').clientHeight;
+               document.getElementById('d3viz').setAttribute("height", height);
+               document.getElementById('d3viz').setAttribute("width", width);
+               document.getElementById("d3g").setAttribute("transform", "translate(" + width / 2 + "," + height * .52 + ")");
+               // Change radius accordingly
+               radius = Math.min(width, height) / 2.2;
+               partition = d3.layout.partition()
+                            .sort(null)
+                            .size([2 * Math.PI, radius * radius]);
+               svg.selectAll("path")
+                            .data(partition.nodes(newData))
+                            .attr("d", arc);
+        }
+
+        // Redraw based on the new size whenever the browser window is resized.
+        window.addEventListener("resize", redraw);
 
         d3.select(self.frameElement).style("height", height + "px");   
     });
