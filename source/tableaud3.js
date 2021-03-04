@@ -4,7 +4,7 @@ subcategory = []
 // Method to load the Tableau viz
 function initViz() {
         var containerDiv = document.getElementById("vizContainer"),
-        url = "https://demoapac.tableau.com/t/Presales/views/Category/Dashboard1",
+        url = "https://public.tableau.com/views/D3Viz/D3Viz?:language=en&:display_count=y&publish=yes&:origin=viz_share_link&:iframeSizedToWindow=true&:embed=y&:showAppBanner=false&:display_count=no&:showVizHome=no",
         options = {
             hideTabs: true,
             hideToolbar: true,
